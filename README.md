@@ -1,2 +1,2 @@
-# gnuplot-php
-A GNUPlot wrapper for PHP
+# gnuplotPHP
+A gnuplot wrapper for PHP

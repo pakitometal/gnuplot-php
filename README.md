@@ -5,4 +5,4 @@ Based in Gergwar GnuPlot (https://github.com/Gregwar/GnuPlot).
 
 ## License
 
-See the [LICENSE] file for license rights and limitations (GPL3).
+See the [LICENSE](LICENSE) file for license rights and limitations (GPL3).

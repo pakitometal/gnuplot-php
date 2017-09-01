@@ -28,11 +28,32 @@
 		const TERMINAL_JPEG     = 'jpeg';
 		const TERMINAL_PDFCAIRO = 'pdfcairo';
 		const TERMINAL_PNG      = 'png';
+		const TERMINAL_PNGCAIRO = 'pngcairo';
 		const TERMINAL_SVG      = 'svg';
 
 		const UNIT_NONE = '';
 		const UNIT_INCH = 'in';
 		const UNIT_CM   = 'cm';
+
+		const LINETYPE_SOLID  = 'solid';
+		const LINETYPE_DASHED = 'dashed';
+
+		private $background_color;
+		private $canvas_height;
+		private $canvas_width;
+		private $font_face;
+		private $font_size;
+		private $graph_scale_x;
+		private $graph_scale_y;
+		private $linetype_color;
+		private $linetype;
+		private $linetype_width;
+		private $mode;
+		private $time_format;
+		private $title;
+		private $unit;
+		private $x_label;
+		private $y_label;
 
 		private $gnuplot = null;
 		private $stdin   = null;
@@ -49,7 +70,50 @@
 			proc_close($this->gnuplot);
 		}
 
-		public function reset() {}
+		public function __get( $name ) { return $this->$name; }
+
+		public function __set( $name, $value ) {
+			switch ( $name ) {
+				case 'canvas_height':
+				case 'canvas_width':
+				case 'font_size':
+					$value = abs($value);
+					break;
+				case 'graph_scale_x':
+				case 'graph_scale_y':
+					if ( strpos($value, '%') ) { $value = (int)$value / 100.0; }
+					$value = abs($value);
+					break;
+				case 'linetype':
+					$value = ( self::LINETYPE_SOLID == $value || self::LINETYPE_DASHED == $value ) ? $value : self::LINETYPE_SOLID;
+					break;
+				case 'unit':
+					$value = ( self::UNIT_NONE == $value || self::UNIT_CM == $value || self::UNIT_INCH == $value ) ? $value : self::UNIT_NONE;
+					break;
+				default:
+					break;
+			}
+			$this->$name = $value;
+		}
+
+		public function reset() {
+			$this->background_color = '#ffffff';
+			$this->canvas_height    = 480;
+			$this->canvas_width     = 640;
+			$this->font_face        = 'sans';
+			$this->font_size        = 10;
+			$this->graph_scale_x    = 1;
+			$this->graph_scale_y    = 1;
+			$this->linetype_color   = [];
+			$this->linetype         = self::LINETYPE_SOLID;
+			$this->linetype_width   = [];
+			$this->style            = 'line';
+			$this->time_format      = '%Y-%m-%d';
+			$this->title            = '';
+			$this->unit             = self::UNIT_NONE;
+			$this->x_label          = '';
+			$this->y_label          = '';
+		}
 
 		public function command( $command = '' ) {
 			fwrite($this->stdin, $command.PHP_EOL);

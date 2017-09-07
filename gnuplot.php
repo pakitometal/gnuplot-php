@@ -27,6 +27,7 @@
 	namespace pakitometal;
 	class gnuplotPHP {
 
+		/* INI - Constants */
 		const GNUPLOT_BINARY = '/usr/bin/gnuplot';
 
 		const TERMINAL_CANVAS   = 'canvas';
@@ -53,7 +54,9 @@
 		const KEY_VALIGN_BOTTOM    = 'bottom';
 		const KEY_VALIGN_CENTER    = 'center';
 		const KEY_VALIGN_TOP       = 'top';
+		/* END - Constants */
 
+		/* INI - Properties */
 		private $background_color;
 		private $box_width;
 		private $canvas_height;
@@ -85,7 +88,9 @@
 		private $___stdout          = null;
 		private $___stderr          = null;
 		private $___tmpfile         = null;
+		/* END - Properties*/
 
+		/* INI - Magic methods */
 		public function __construct( $gnuplot_binary = false ) {
 			if ( !$gnuplot_binary ) { $this->___gnuplot_binary = self::GNUPLOT_BINARY; }
 			$this->reset();
@@ -95,7 +100,7 @@
 		public function __destruct() {
 			$this->command('quit');
 			proc_close($this->___gnuplot_proc);
-			@unlink($this->___tmpfile);
+			unlink($this->___tmpfile);
 		}
 
 		public function __get( $name ) {
@@ -231,7 +236,9 @@
 					break;
 			}
 		}
+		/* END - Magic methods */
 
+		/* INI - Private methods */
 		private function ___set_pipes() {
 			$descriptorspecs = [
 				 [ 'pipe', 'r' ]
@@ -256,8 +263,27 @@
 			$plot_script = array_merge($plot_script, $extra_commands);
 			$output = $this->command($plot_script);
 			if ( $error = stream_get_contents($this->___stderr) ) { trigger_error($error, E_USER_ERROR); exit; }
-			$this->___tmpfile = $this->init_tmpfile($data);
+			$this->init_tmpfile($data);
 			return $output;
+		}
+
+		private function ___read_stream( $stream, $chunk_size = 8192 ) {
+			$safe_time = 40000;
+			$stream_contents = '';
+			stream_set_blocking($stream, false);
+			usleep($safe_time);
+			while ( $data = fread($stream, $chunk_size) ) { $stream_contents .= $data; }
+			return $stream_contents;
+		}
+		/* END - Private methods */
+
+		/* INI - Public methods */
+		public function get_output( $chunk_size = 8192 ) {
+			return $this->___read_stream($this->___stdout, $chunk_size);
+		}
+
+		public function get_errors( $chunk_size = 8192 ) {
+			return $this->___read_stream($this->___stderr, $chunk_size);
 		}
 
 		public function reset() {
@@ -293,8 +319,7 @@
 			$stream_contents = '';
 			$timeout = 10;
 			do {
-				stream_set_blocking($this->___stdout, false);
-				$data = fread($this->___stdout, 128);
+				$data = fread($this->___stdout, 8192);
 				$stream_contents .= $data;
 				usleep(5000);
 				$timeout -= 5;
@@ -303,12 +328,11 @@
 		}
 
 		public function init_tmpfile ( $data = [] ) {
-			if ( !($data_tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { trigger_error('Failed creating temp data file', E_USER_ERROR); exit; }
-			if ( $fp = fopen($data_tmpfile, 'w') ) {
+			if ( !$this->___tmpfile && !($this->___tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { trigger_error('Failed creating temp data file', E_USER_ERROR); exit; }
+			if ( $fp = fopen($this->___tmpfile, 'w') ) {
 				foreach ( $data as $row ) { fwrite($fp, implode("\t", $row).PHP_EOL); }
 				fclose($fp);
 			}
-			$this->data_tmpfile = $data_tmpfile;
 		}
 
 		/***********************************************************/
@@ -316,17 +340,18 @@
 		/***********************************************************/
 	    public function plot ( $plot_command ) {
 			fflush($this->___stdout);
+			//stream_set_blocking($this->___stdout, false);
 			fwrite($this->___stdin, $plot_command.PHP_EOL);
-			$stream_contents = '';
+			/*$stream_contents = '';
 			$timeout = 100;
 			do {
-				stream_set_blocking($this->___stdout, false);
-				$data = fread($this->___stdout, 128);
+				$data = fread($this->___stdout, 8192);
 				$stream_contents .= $data;
 				usleep(5000);
 				$timeout -= 5;
 			} while ( $timeout > 0 || $data );
-			return $stream_contents;
+			return $stream_contents;*/
+			return $this->get_output();
 		}
 		/***********************************************************/
 		/***********************************************************/
@@ -334,8 +359,8 @@
 
 		public function plot_boxerrorbars( $data, $extra_commands = [] ) {
 			$this->___init_plot($data, $extra_commands);
-			$plot_command = 'plot "'.$this->tmpfile.'" with boxerrorbars';
-			$this->plot($plot_command);
+			$plot_command = 'plot "'.$this->___tmpfile.'" with boxerrorbars';
+			return $this->plot($plot_command);
 		}
 
 		public function plot_boxes( $data ) {
@@ -420,8 +445,8 @@
 
 		public function plot_linespoints ( $data, $extra_commands = [] ) {
 			$this->___init_plot($data, $extra_commands);
-			$plot_command = 'plot "'.$this->tmpfile.'" with linespoints';
-			$this->plot($plot_command);
+			$plot_command = 'plot "'.$this->___tmpfile.'" with linespoints';
+			return $this->plot($plot_command);
 		}
 
 		public function plot_newhistogram ( $data ) {
@@ -493,5 +518,6 @@
 			$plot_command = [];
 			$this->___init_plot($data, $extra_commands);
 		}
+		/* END - Public methods */
 
 	}

@@ -1,21 +1,27 @@
 <?php
 
 /**
-* Copyright (C) 2017 Francisco Licerán Peralbo
-* This file is part of gnuplotPHP.
+* MIT License
 *
-* This program is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
+* Copyright (c) 2017 Francisco Licerán Peralbo
 *
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
 *
-* You should have received a copy of the GNU General Public License
-* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+* The above copyright notice and this permission notice shall be included in all
+* copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
 **/
 
 	namespace pakitometal;
@@ -89,7 +95,7 @@
 		public function __destruct() {
 			$this->command('quit');
 			proc_close($this->___gnuplot_proc);
-			unlink($this->___tmpfile);
+			@unlink($this->___tmpfile);
 		}
 
 		public function __get( $name ) {
@@ -227,12 +233,12 @@
 		}
 
 		private function ___set_pipes() {
-			$descriptorspec = [
+			$descriptorspecs = [
 				 [ 'pipe', 'r' ]
 				,[ 'pipe', 'w' ]
 				,[ 'pipe', 'r' ]
 			];
-			if ( !($this->___gnuplot_proc = proc_open($this->___gnuplot_binary, $descriptorspecs, $pipes, sys_get_temp_dir())) ) { throw new Exception('Unable to run gnuplot'); }
+			if ( !($this->___gnuplot_proc = proc_open($this->___gnuplot_binary, $descriptorspecs, $pipes, sys_get_temp_dir())) ) { throw new \Exception('Unable to run gnuplot'); }
 			$this->___stdin  = $pipes[0];
 			$this->___stdout = $pipes[1];
 			$this->___stderr = $pipes[2];
@@ -241,7 +247,7 @@
 		private function ___init_plot( $data, $extra_commands = [] ) {
 			$plot_script = [
 				 'set term '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height
-				,'set size '.$this->graph_scale_x.','-$this->graph_scale_y
+				,'set size '.$this->graph_scale_x.','.$this->graph_scale_y
 			];
 			if ( self::KEY_POSITION_UNSET == $this->key_position ) { $plot_script[] = 'unset key'; }
 			else { $plot_script[] = 'set key '.$this->key_position.' '.$this->key_align.' '.$this->key_valign.' '.$this->key_style; }
@@ -282,14 +288,24 @@
 
 		public function command( $command ) {
 			if ( is_array($command) ) { $command = implode(PHP_EOL, $command); }
-			fwrite($this->stdin, $command.PHP_EOL);
-			return stream_get_contents($this->___stdout);
+			fwrite($this->___stdin, $command.PHP_EOL);
+			stream_set_blocking($this->___stdout, false);
+			$stream_contents = '';
+			$timeout = 10;
+			do {
+				stream_set_blocking($this->___stdout, false);
+				$data = fread($this->___stdout, 128);
+				$stream_contents .= $data;
+				usleep(5000);
+				$timeout -= 5;
+			} while ( $timeout > 0 || $data );
+			return $stream_contents;
 		}
 
 		public function init_tmpfile ( $data = [] ) {
 			if ( !($data_tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { trigger_error('Failed creating temp data file', E_USER_ERROR); exit; }
 			if ( $fp = fopen($data_tmpfile, 'w') ) {
-				foreach ( $data as $row ) { fwrite($fp, implode('\t', $row).PHP_EOL); }
+				foreach ( $data as $row ) { fwrite($fp, implode("\t", $row).PHP_EOL); }
 				fclose($fp);
 			}
 			$this->data_tmpfile = $data_tmpfile;
@@ -298,19 +314,19 @@
 		/***********************************************************/
 		/***********************************************************/
 		/***********************************************************/
-	    public function plot( $plot_command ) {
+	    public function plot ( $plot_command ) {
 			fflush($this->___stdout);
-			fwrite($this->stdin, $plot_command.PHP_EOL);
-			$result = '';
+			fwrite($this->___stdin, $plot_command.PHP_EOL);
+			$stream_contents = '';
 			$timeout = 100;
 			do {
 				stream_set_blocking($this->___stdout, false);
 				$data = fread($this->___stdout, 128);
-				$result .= $data;
+				$stream_contents .= $data;
 				usleep(5000);
 				$timeout -= 5;
 			} while ( $timeout > 0 || $data );
-			return $result;
+			return $stream_contents;
 		}
 		/***********************************************************/
 		/***********************************************************/
@@ -318,7 +334,7 @@
 
 		public function plot_boxerrorbars( $data, $extra_commands = [] ) {
 			$this->___init_plot($data, $extra_commands);
-			$plot_command = 'plot "'.$data_file.'" with boxerrorbars';
+			$plot_command = 'plot "'.$this->tmpfile.'" with boxerrorbars';
 			$this->plot($plot_command);
 		}
 
@@ -402,9 +418,10 @@
 			$this->___init_plot($data, $extra_commands);
 		}
 
-		public function plot_linespoints ( $data ) {
-			$plot_command = [];
+		public function plot_linespoints ( $data, $extra_commands = [] ) {
 			$this->___init_plot($data, $extra_commands);
+			$plot_command = 'plot "'.$this->tmpfile.'" with linespoints';
+			$this->plot($plot_command);
 		}
 
 		public function plot_newhistogram ( $data ) {

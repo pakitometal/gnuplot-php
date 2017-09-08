@@ -309,27 +309,59 @@
 		/* END - Magic methods */
 
 		/* INI - Private methods */
+
+		/**
+		* Enqueues gnuplot commands.
+		*
+		* @param $command Mixed String or Array of Strings with the command(s) to be enqueued.
+		*
+		* @modify $this->___command_queue, adding the passed command(s) to the end.
+		*
+		*/
 		private function ___enqueue_command( $command ) {
 			if ( is_string($command) ) { $command = [ $command ]; }
 			$this->___command_queue = array_merge($this->___command_queue, $command);
 		}
 
+		/**
+		* Executes the command queue in gnuplot.
+		*
+		* @param $flush Boolean true to flush the command queue after the execution, false otherwise. Default: true.
+		*
+		* @modify If $flush is true, $this->___command_is emptied (set to empty array).
+		*
+		*/
 		private function ___execute_queue( $flush = true ) {
 			$command_queue = implode(' ; ', $this->___command_queue);
 			if ( $flush ) { $this->___command_queue = []; }
 			return shell_exec($this->___gnuplot_binary.' -e \''.str_replace("'", "\'", $command_queue).'\'');
 		}
 
+		/**
+		* Initializes a temp file with the data to plot.
+		*
+		* Throws an Exception if the data is not valid for the current plot style (set in $this->plotstyle),
+		* or if the temp file couldn't be created.
+		*
+		* @param $data Array with the data to be plotted.
+		*
+		* @modify $this->___data_tmpfile is set to the full path of the created temp file.
+		*
+		*/
 		private function ___init_data_tmpfile ( $data = [] ) {
-			if ( !$this->___validate_data($data) ) { trigger_error('Invalid data for plotstyle "'.$this->plotstyle.'"', E_USER_ERROR); exit;  }
-			if ( !($this->___data_tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { trigger_error('Failed creating temp data file', E_USER_ERROR); exit; }
+			if ( !$this->___validate_data($data) ) { throw new \Exception('Invalid data for plotstyle "'.$this->plotstyle.'"'); return;  }
+			if ( !($this->___data_tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { throw new \Exception('Failed creating temp data file'); return; }
 			if ( $fp = fopen($this->___data_tmpfile, 'w') ) {
 				foreach ( $data as $row ) { fwrite($fp, implode("\t", $row).PHP_EOL); }
 				fclose($fp);
 			}
 		}
 
-		private function ___init_data_plot( $extra_commands = [] ) {
+		/**
+		* Initializes the command queue for a new plot, applying the properties of the current object.
+		*
+		*/
+		private function ___init_data_plot() {
 			$command_queue = [
 				 'set term '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height
 				,'set size '.$this->graph_scale_x.','.$this->graph_scale_y
@@ -341,6 +373,14 @@
 			$this->___enqueue_command($command_queue);
 		}
 
+		/**
+		* Validates the data for the plot style set in $this->plotstyle.
+		*
+		* @param $data Array with the data to be validated.
+		*
+		* @return Boolean true if the data is valid for the style set in $this->plotstyle, false otherwise.
+		*
+		*/
 		private function ___validate_data( $data ) {
 			// TO-DO: validate data for each plot style
 			return true;
@@ -348,6 +388,13 @@
 		/* END - Private methods */
 
 		/* INI - Public methods */
+
+		/**
+		* Resets the object for a new plot.
+		*
+		* @modify All object public properties, setting the to their default values. Also, empties the command queue.
+		*
+		*/
 		public function reset() {
 			$this->background_color    = '#ffffff';
 			$this->canvas_height       = 480;
@@ -377,6 +424,15 @@
 			$this->___command_queue    = [];
 		}
 
+		/**
+		* Plots a data set.
+		*
+		* @param $data Array with the data to be plotted.
+		* @param $extra_commands Array with extra commands to be apllied to the plot.
+		*
+		* @return String with the output of the gnuplot plot command.
+		*
+		*/
 		public function plot_data( $data, $extra_commands = [] ) {
 			$this->___init_data_tmpfile($data);
 			$this->___init_data_plot();

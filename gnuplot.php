@@ -27,6 +27,7 @@
 	namespace pakitometal;
 	class gnuplotPHP {
 
+		/* INI - Class constants */
 		const GNUPLOT_BINARY = '/usr/bin/gnuplot';
 
 		const TERMINAL_CANVAS   = 'canvas';
@@ -37,6 +38,39 @@
 		const TERMINAL_PNG      = 'png';
 		const TERMINAL_PNGCAIRO = 'pngcairo';
 		const TERMINAL_SVG      = 'svg';
+
+		const PLOTSTYLE_BOXERRORBARS   = 'boxerrorbars';
+		const PLOTSTYLE_BOXES          = 'boxes';
+		const PLOTSTYLE_BOXPLOT        = 'boxplot';
+		const PLOTSTYLE_BOXXYERRORBARS = 'boxxyerrorbars';
+		const PLOTSTYLE_CANDLESTICKS   = 'candlesticks';
+		const PLOTSTYLE_CIRCLES        = 'circles';
+		const PLOTSTYLE_ELLIPSES       = 'ellipses';
+		const PLOTSTYLE_DOTS           = 'dots';
+		const PLOTSTYLE_FILLEDCURVES   = 'filledcurves';
+		const PLOTSTYLE_FINANCEBARS    = 'financebars';
+		const PLOTSTYLE_FSTEPS         = 'fsteps';
+		const PLOTSTYLE_FILLSTEPS      = 'fillsteps';
+		const PLOTSTYLE_HISTEPS        = 'histeps';
+		const PLOTSTYLE_HISTOGRAM      = 'histogram';
+		const PLOTSTYLE_NEWHISTOGRAM   = 'newhistogram';
+		const PLOTSTYLE_IMAGE          = 'image';
+		const PLOTSTYLE_LABELS         = 'labels';
+		const PLOTSTYLE_LINES          = 'lines';
+		const PLOTSTYLE_LINESPOINTS    = 'linespoints';
+		const PLOTSTYLE_PARALLELAXES   = 'parallelaxes';
+		const PLOTSTYLE_POINTS         = 'points';
+		const PLOTSTYLE_POLAR          = 'polar';
+		const PLOTSTYLE_STEPS          = 'steps';
+		const PLOTSTYLE_RGBALPHA       = 'rgbalpha';
+		const PLOTSTYLE_RGBIMAGE       = 'rgbimage';
+		const PLOTSTYLE_VECTORS        = 'vectors';
+		const PLOTSTYLE_XERRORBARS     = 'xerrorbars';
+		const PLOTSTYLE_XYERRORBARS    = 'xyerrorbars';
+		const PLOTSTYLE_YERRORBARS     = 'yerrorbars';
+		const PLOTSTYLE_XERRORLINES    = 'xerrorlines';
+		const PLOTSTYLE_XYERRORLINES   = 'xyerrorlines';
+		const PLOTSTYLE_YERRORLINES    = 'yerrorlines';
 
 		const UNIT_NONE = '';
 		const UNIT_INCH = 'in';
@@ -53,7 +87,9 @@
 		const KEY_VALIGN_BOTTOM    = 'bottom';
 		const KEY_VALIGN_CENTER    = 'center';
 		const KEY_VALIGN_TOP       = 'top';
+		/* END - Class constants */
 
+		/* INI - Object properties */
 		private $background_color;
 		private $box_width;
 		private $canvas_height;
@@ -70,6 +106,7 @@
 		private $linestyle_dashtype;
 		private $linestyle_pointtype;
 		private $linestyle_width;
+		private $plotstyle;
 		private $terminal;
 		private $time_format;
 		private $title;
@@ -79,23 +116,19 @@
 		private $x_label;
 		private $y_label;
 
-		private $___gnuplot_binary  = null;
-		private $___gnuplot_proc    = null;
-		private $___stdin           = null;
-		private $___stdout          = null;
-		private $___stderr          = null;
-		private $___tmpfile         = null;
+		private $___gnuplot_binary;
+		private $___command_queue;
+		private $___data_tmpfile;
+		/* END - Object properties */
 
+		/* INI - Magic methods */
 		public function __construct( $gnuplot_binary = false ) {
 			if ( !$gnuplot_binary ) { $this->___gnuplot_binary = self::GNUPLOT_BINARY; }
 			$this->reset();
-			$this->___set_pipes();
 		}
 
 		public function __destruct() {
-			$this->command('quit');
-			proc_close($this->___gnuplot_proc);
-			@unlink($this->___tmpfile);
+			@unlink($this->___data_tmpfile);
 		}
 
 		public function __get( $name ) {
@@ -177,6 +210,47 @@
 					}
 					$this->key_valign = $value;
 					break;
+				case 'plotstyle':
+					switch ( $value ) {
+						case self::PLOTSTYLE_BOXERRORBARS:
+						case self::PLOTSTYLE_BOXES:
+						case self::PLOTSTYLE_BOXPLOT:
+						case self::PLOTSTYLE_BOXXYERRORBARS:
+						case self::PLOTSTYLE_CANDLESTICKS:
+						case self::PLOTSTYLE_CIRCLES:
+						case self::PLOTSTYLE_ELLIPSES:
+						case self::PLOTSTYLE_DOTS:
+						case self::PLOTSTYLE_FILLEDCURVES:
+						case self::PLOTSTYLE_FINANCEBARS:
+						case self::PLOTSTYLE_FSTEPS:
+						case self::PLOTSTYLE_FILLSTEPS:
+						case self::PLOTSTYLE_HISTEPS:
+						case self::PLOTSTYLE_HISTOGRAM:
+						case self::PLOTSTYLE_NEWHISTOGRAM:
+						case self::PLOTSTYLE_IMAGE:
+						case self::PLOTSTYLE_LABELS:
+						case self::PLOTSTYLE_LINES:
+						case self::PLOTSTYLE_LINESPOINTS:
+						case self::PLOTSTYLE_PARALLELAXES:
+						case self::PLOTSTYLE_POINTS:
+						case self::PLOTSTYLE_POLAR:
+						case self::PLOTSTYLE_STEPS:
+						case self::PLOTSTYLE_RGBALPHA:
+						case self::PLOTSTYLE_RGBIMAGE:
+						case self::PLOTSTYLE_VECTORS:
+						case self::PLOTSTYLE_XERRORBARS:
+						case self::PLOTSTYLE_XYERRORBARS:
+						case self::PLOTSTYLE_YERRORBARS:
+						case self::PLOTSTYLE_XERRORLINES:
+						case self::PLOTSTYLE_XYERRORLINES:
+						case self::PLOTSTYLE_YERRORLINES:
+							break;
+						default:
+							$value = self::PLOTSTYLE_LINES;
+							break;
+					}
+					$this->plotstyle = $value;
+					break;
 				case 'terminal':
 					switch ( $value ) {
 						case self::TERMINAL_CANVAS:
@@ -231,35 +305,48 @@
 					break;
 			}
 		}
+		/* INI - Magic methods */
 
-		private function ___set_pipes() {
-			$descriptorspecs = [
-				 [ 'pipe', 'r' ]
-				,[ 'pipe', 'w' ]
-				,[ 'pipe', 'r' ]
-			];
-			if ( !($this->___gnuplot_proc = proc_open($this->___gnuplot_binary, $descriptorspecs, $pipes, sys_get_temp_dir())) ) { throw new \Exception('Unable to run gnuplot'); }
-			$this->___stdin  = $pipes[0];
-			$this->___stdout = $pipes[1];
-			$this->___stderr = $pipes[2];
+		/* INI - Private methods */
+		private function ___enqueue_command( $command ) {
+			if ( is_string($command) ) { $command = [ $command ]; }
+			$this->___command_queue = array_merge($this->___command_queue, $command);
 		}
 
-		private function ___init_plot( $data, $extra_commands = [] ) {
-			$plot_script = [
+		private function ___execute_queue( $flush = true ) {
+			$command_queue = implode(' ; ', $this->___command_queue);
+			if ( $flush ) { $this->___command_queue = []; }
+			return shell_exec($this->___gnuplot_binary.' -e \''.str_replace("'", "\'", $command_queue).'\'');
+		}
+
+		private function ___init_data_tmpfile ( $data = [] ) {
+			if ( !$this->___validate_data($data) ) { trigger_error('Invalid data for plotstyle "'.$this->plotstyle.'"', E_USER_ERROR); exit;  }
+			if ( !($this->___data_tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { trigger_error('Failed creating temp data file', E_USER_ERROR); exit; }
+			if ( $fp = fopen($this->___data_tmpfile, 'w') ) {
+				foreach ( $data as $row ) { fwrite($fp, implode("\t", $row).PHP_EOL); }
+				fclose($fp);
+			}
+		}
+
+		private function ___init_data_plot( $extra_commands = [] ) {
+			$command_queue = [
 				 'set term '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height
 				,'set size '.$this->graph_scale_x.','.$this->graph_scale_y
+				,'set style data '.$this->plotstyle
 			];
-			if ( self::KEY_POSITION_UNSET == $this->key_position ) { $plot_script[] = 'unset key'; }
-			else { $plot_script[] = 'set key '.$this->key_position.' '.$this->key_align.' '.$this->key_valign.' '.$this->key_style; }
-			if ( $this->title ) { $plot_script[] = 'set title "'.$this->title.'" font "'.$this->title_font_face.','.$this->title_font_size.'"'; }
-			if ( is_string($extra_commands) ) { $extra_commands = [ $extra_commands ]; }
-			$plot_script = array_merge($plot_script, $extra_commands);
-			$output = $this->command($plot_script);
-			if ( $error = stream_get_contents($this->___stderr) ) { trigger_error($error, E_USER_ERROR); exit; }
-			$this->___tmpfile = $this->init_tmpfile($data);
-			return $output;
+			if ( self::KEY_POSITION_UNSET == $this->key_position ) { $command_queue[] = 'unset key'; }
+			else { $command_queue[] = 'set key '.$this->key_position.' '.$this->key_align.' '.$this->key_valign.' '.$this->key_style; }
+			if ( $this->title ) { $command_queue[] = 'set title "'.$this->title.'" font "'.$this->title_font_face.','.$this->title_font_size.'"'; }
+			$this->___enqueue_command($command_queue);
 		}
 
+		private function ___validate_data( $data ) {
+			// TO-DO: validate data for each plot style
+			return true;
+		}
+		/* END - Private methods */
+
+		/* INI - Public methods */
 		public function reset() {
 			$this->background_color    = '#ffffff';
 			$this->canvas_height       = 480;
@@ -275,6 +362,7 @@
 			$this->linestyle_color     = false;
 			$this->linestyle_dashtype  = false;
 			$this->linestyle_pointtype = false;
+			$this->plotstyle           = self::PLOTSTYLE_LINES;
 			$this->linestyle_width     = false;
 			$this->terminal            = self::TERMINAL_PNGCAIRO;
 			$this->time_format         = '%Y-%m-%d';
@@ -284,214 +372,16 @@
 			$this->unit                = self::UNIT_NONE;
 			$this->x_label             = '';
 			$this->y_label             = '';
+
+			$this->___command_queue    = [];
 		}
 
-		public function command( $command ) {
-			if ( is_array($command) ) { $command = implode(PHP_EOL, $command); }
-			fwrite($this->___stdin, $command.PHP_EOL);
-			stream_set_blocking($this->___stdout, false);
-			$stream_contents = '';
-			$timeout = 10;
-			do {
-				stream_set_blocking($this->___stdout, false);
-				$data = fread($this->___stdout, 128);
-				$stream_contents .= $data;
-				usleep(5000);
-				$timeout -= 5;
-			} while ( $timeout > 0 || $data );
-			return $stream_contents;
+		public function plot_data( $data, $extra_commands = [] ) {
+			$this->___init_data_tmpfile($data);
+			$this->___init_data_plot();
+			$this->___enqueue_command(array_merge($extra_commands, [ 'plot "'.$this->___data_tmpfile.'"' ]));
+			return $this->___execute_queue();
 		}
-
-		public function init_tmpfile ( $data = [] ) {
-			if ( !($data_tmpfile = tempnam(sys_get_temp_dir(), 'DAT')) ) { trigger_error('Failed creating temp data file', E_USER_ERROR); exit; }
-			if ( $fp = fopen($data_tmpfile, 'w') ) {
-				foreach ( $data as $row ) { fwrite($fp, implode("\t", $row).PHP_EOL); }
-				fclose($fp);
-			}
-			$this->data_tmpfile = $data_tmpfile;
-		}
-
-		/***********************************************************/
-		/***********************************************************/
-		/***********************************************************/
-	    public function plot ( $plot_command ) {
-			fflush($this->___stdout);
-			fwrite($this->___stdin, $plot_command.PHP_EOL);
-			$stream_contents = '';
-			$timeout = 100;
-			do {
-				stream_set_blocking($this->___stdout, false);
-				$data = fread($this->___stdout, 128);
-				$stream_contents .= $data;
-				usleep(5000);
-				$timeout -= 5;
-			} while ( $timeout > 0 || $data );
-			return $stream_contents;
-		}
-		/***********************************************************/
-		/***********************************************************/
-		/***********************************************************/
-
-		public function plot_boxerrorbars( $data, $extra_commands = [] ) {
-			$this->___init_plot($data, $extra_commands);
-			$plot_command = 'plot "'.$this->tmpfile.'" with boxerrorbars';
-			$this->plot($plot_command);
-		}
-
-		public function plot_boxes( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_boxplot( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_boxxyerrorbars( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_candlesticks ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_circles ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_dots ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_ellipses ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_filledcurves ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_fillsteps ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_financebars ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_fsteps ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_histeps ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_histogram ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_image ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_labels ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_lines ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_linespoints ( $data, $extra_commands = [] ) {
-			$this->___init_plot($data, $extra_commands);
-			$plot_command = 'plot "'.$this->tmpfile.'" with linespoints';
-			$this->plot($plot_command);
-		}
-
-		public function plot_newhistogram ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_parallelaxes ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_points ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_polar ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_rgbalpha ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_rgbimage ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_steps ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_vectors ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_xerrorbars ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_xerrorlines ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_xyerrorbars ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_xyerrorlines ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_yerrorbars ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
-
-		public function plot_yerrorlines ( $data ) {
-			$plot_command = [];
-			$this->___init_plot($data, $extra_commands);
-		}
+		/* END - Public methods */
 
 	}

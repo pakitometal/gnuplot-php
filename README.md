@@ -1,5 +1,5 @@
 # gnuplotPHP
-A gnuplot wrapper for PHP.
+A data plotting library for PHP using gnuplot.
 
 Based in Gergwar GnuPlot (https://github.com/Gregwar/GnuPlot).
 

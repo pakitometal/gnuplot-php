@@ -22,5 +22,5 @@
 	$gnuplot->title = 'Fibonacci first 10 terms';
 	$gnuplot->plotstyle = \pakitometal\gnuplotPHP::PLOTSTYLE_LINES;
 	$gnuplot->terminal = \pakitometal\gnuplotPHP::TERMINAL_PNGCAIRO;
-	file_put_contents(sys_get_temp_dir().'/fibo.png', $gnuplot->plot_data($fibo));
+	file_put_contents(sys_get_temp_dir().'/fibo.png', $gnuplot->plot_data($fibo, [ 'set grid' ]));
 	exit;

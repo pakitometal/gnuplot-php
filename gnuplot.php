@@ -30,7 +30,6 @@
 		/* INI - Class constants */
 		const GNUPLOT_BINARY = '/usr/bin/gnuplot';
 
-		const TERMINAL_CANVAS   = 'canvas';
 		const TERMINAL_DUMB     = 'dumb';
 		const TERMINAL_GIF      = 'gif';
 		const TERMINAL_JPEG     = 'jpeg';
@@ -41,26 +40,24 @@
 
 		const PLOTSTYLE_BOXERRORBARS   = 'boxerrorbars';
 		const PLOTSTYLE_BOXES          = 'boxes';
-		const PLOTSTYLE_BOXPLOT        = 'boxplot';
 		const PLOTSTYLE_BOXXYERRORBARS = 'boxxyerrorbars';
 		const PLOTSTYLE_CANDLESTICKS   = 'candlesticks';
 		const PLOTSTYLE_CIRCLES        = 'circles';
 		const PLOTSTYLE_ELLIPSES       = 'ellipses';
 		const PLOTSTYLE_DOTS           = 'dots';
 		const PLOTSTYLE_FILLEDCURVES   = 'filledcurves';
+		const PLOTSTYLE_FILLSTEPS      = 'fillsteps';
 		const PLOTSTYLE_FINANCEBARS    = 'financebars';
 		const PLOTSTYLE_FSTEPS         = 'fsteps';
-		const PLOTSTYLE_FILLSTEPS      = 'fillsteps';
 		const PLOTSTYLE_HISTEPS        = 'histeps';
 		const PLOTSTYLE_HISTOGRAM      = 'histogram';
-		const PLOTSTYLE_NEWHISTOGRAM   = 'newhistogram';
 		const PLOTSTYLE_IMAGE          = 'image';
+		const PLOTSTYLE_IMPULSES       = 'impulses';
 		const PLOTSTYLE_LABELS         = 'labels';
 		const PLOTSTYLE_LINES          = 'lines';
 		const PLOTSTYLE_LINESPOINTS    = 'linespoints';
 		const PLOTSTYLE_PARALLELAXES   = 'parallelaxes';
 		const PLOTSTYLE_POINTS         = 'points';
-		const PLOTSTYLE_POLAR          = 'polar';
 		const PLOTSTYLE_STEPS          = 'steps';
 		const PLOTSTYLE_RGBALPHA       = 'rgbalpha';
 		const PLOTSTYLE_RGBIMAGE       = 'rgbimage';
@@ -261,26 +258,24 @@
 					switch ( $value ) {
 						case self::PLOTSTYLE_BOXERRORBARS:
 						case self::PLOTSTYLE_BOXES:
-						case self::PLOTSTYLE_BOXPLOT:
 						case self::PLOTSTYLE_BOXXYERRORBARS:
 						case self::PLOTSTYLE_CANDLESTICKS:
 						case self::PLOTSTYLE_CIRCLES:
 						case self::PLOTSTYLE_ELLIPSES:
 						case self::PLOTSTYLE_DOTS:
 						case self::PLOTSTYLE_FILLEDCURVES:
+						case self::PLOTSTYLE_FILLSTEPS:
 						case self::PLOTSTYLE_FINANCEBARS:
 						case self::PLOTSTYLE_FSTEPS:
-						case self::PLOTSTYLE_FILLSTEPS:
 						case self::PLOTSTYLE_HISTEPS:
 						case self::PLOTSTYLE_HISTOGRAM:
-						case self::PLOTSTYLE_NEWHISTOGRAM:
 						case self::PLOTSTYLE_IMAGE:
+						case self::PLOTSTYLE_IMPULSES:
 						case self::PLOTSTYLE_LABELS:
 						case self::PLOTSTYLE_LINES:
 						case self::PLOTSTYLE_LINESPOINTS:
 						case self::PLOTSTYLE_PARALLELAXES:
 						case self::PLOTSTYLE_POINTS:
-						case self::PLOTSTYLE_POLAR:
 						case self::PLOTSTYLE_STEPS:
 						case self::PLOTSTYLE_RGBALPHA:
 						case self::PLOTSTYLE_RGBIMAGE:
@@ -300,7 +295,6 @@
 					break;
 				case 'terminal':
 					switch ( $value ) {
-						case self::TERMINAL_CANVAS:
 						case self::TERMINAL_DUMB:
 						case self::TERMINAL_GIF:
 						case self::TERMINAL_JPEG:
@@ -317,9 +311,9 @@
 					break;
 				case 'unit':
 					switch ( $value ) {
-						case self::UNIT_NONE:
 						case self::UNIT_CM:
 						case self::UNIT_INCH:
+						case self::UNIT_NONE:
 							break;
 						default:
 							$value = self::UNIT_NONE;
@@ -423,9 +417,10 @@
 		*
 		*/
 		private function ___init_data_plot() {
-			// TO-DO: check valid options for each terminal type
+			if ( self::TERMINAL_DUMB == $this->terminal ) {	$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height; }
+			else { $terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"'; }
 			$command_queue = [
-				 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"'
+				 $terminal
 				,'set size '.$this->graph_scale_x.','.$this->graph_scale_y
 				,'set style data '.$this->plotstyle
 			];
@@ -435,13 +430,14 @@
 			if ( $this->linetype_dash ) { $linetype[] = 'dt '.$this->linetype_dash; }
 			if ( $this->linetype_point ) { $linetype[] = 'pt '.$this->linetype_point; }
 			if ( $this->linetype_width ) { $linetype[] = 'lw '.$this->linetype_width; }
-			if ( $linetype ) { $command_queue[] = implode(' ', $linetype); }
+			if ( $linetype ) { $command_queue[] = 'set linetype 1 '.implode(' ', $linetype); }
 
 			switch ( $this->plotstyle ) {
 				case self::PLOTSTYLE_BOXERRORBARS:
 				case self::PLOTSTYLE_BOXES:
-				case self::PLOTSTYLE_BOXPLOT:
 				case self::PLOTSTYLE_BOXXYERRORBARS:
+				case self::PLOTSTYLE_CANDLESTICKS:
+				case self::PLOTSTYLE_HISTOGRAM:
 					$command_queue[] = 'set boxwidth '.$this->box_relative_width.' relative';
 					$fill_style = 'set style fill '.$this->box_fill_style;
 					if ( self::BOX_FILL_STYLE_SOLID == $this->box_fill_style ) { $fill_style .= ' '.$this->box_fill_opacity; }
@@ -477,8 +473,72 @@
 		*
 		*/
 		private function ___validate_data( $data ) {
-			// TO-DO: validate data for each plot style
-			return true;
+
+			/* Validates a dataset by its number of columns
+			*
+			* @param $dataset array of arrays, each one containig a row of data.
+			* @param $min_cols Mixed integer min number of columns count in the $dataset
+			* 	to be valid, or Boolean false if there is no column limitations. Default: false.
+			* @param $max_cols Mixed integer max number of columns count in the $dataset
+			* 	to be valid, or Boolean false if this number should be equal to $min_cols. Default: false.
+			*
+			* @return Boolean true if the dataset is valid for the given number of columns, false otherwise.
+			*
+			*/
+			$validate = function ( $dataset, $min_cols = false, $max_cols = false ) {
+				$max_cols = $max_cols ?? $min_cols;
+				$cols_count = array_map(function( $row ) { return count($row); }, $dataset);
+				if ( 1 < count(array_unique($cols_count)) ) { return false; }
+				return ( (!$min_cols && !$max_cols) || ($min_cols <= $cols_count[0] && $cols_count[0] <= $max_cols) );
+			};
+
+			switch ( $this->plotstyle ) {
+				case self::PLOTSTYLE_BOXERRORBARS:
+					return $validate($data, 3, 5);
+				case self::PLOTSTYLE_BOXES:
+				case self::PLOTSTYLE_FILLEDCURVES:
+					return $validate($data, 2, 3);
+				case self::PLOTSTYLE_BOXXYERRORBARS:
+				case self::PLOTSTYLE_XYERRORBARS:
+				case self::PLOTSTYLE_XYERRORLINES:
+					return $validate($data, 4) && $validate($data, 6);
+				case self::PLOTSTYLE_CANDLESTICKS:
+				case self::PLOTSTYLE_FINANCEBARS:
+				case self::PLOTSTYLE_RGBIMAGE:
+					return $validate($data, 5);
+				case self::PLOTSTYLE_CIRCLES:
+				case self::PLOTSTYLE_ELLIPSES:
+					return $validate($data, 2, 5);
+				case self::PLOTSTYLE_DOTS:
+					return $validate($data, 2);
+				case self::PLOTSTYLE_FILLSTEPS:
+				case self::PLOTSTYLE_FSTEPS:
+				case self::PLOTSTYLE_HISTEPS:
+				case self::PLOTSTYLE_IMPULSES:
+				case self::PLOTSTYLE_LINES:
+				case self::PLOTSTYLE_LINESPOINTS:
+				case self::PLOTSTYLE_POINTS:
+				case self::PLOTSTYLE_STEPS:
+					return $validate($data, 1, 2);
+				case self::PLOTSTYLE_HISTOGRAM:
+					return $validate($data, 1);
+				case self::PLOTSTYLE_IMAGE:
+				case self::PLOTSTYLE_LABELS:
+					return $validate($data, 3);
+				case self::PLOTSTYLE_PARALLELAXES:
+					return $validate($data);
+				case self::PLOTSTYLE_RGBALPHA:
+					return $validate($data, 6);
+				case self::PLOTSTYLE_VECTORS:
+					return $validate($data, 4);
+				case self::PLOTSTYLE_XERRORBARS:
+				case self::PLOTSTYLE_XERRORLINES:
+				case self::PLOTSTYLE_YERRORLINES:
+					return $validate($data, 3, 4);
+				case self::PLOTSTYLE_YERRORBARS:
+					return $validate($data, 2, 4);
+			}
+			return false;
 		}
 		/* END - Private methods */
 

@@ -20,7 +20,7 @@
 
 	$gnuplot->key_position = \pakitometal\gnuplotPHP::KEY_POSITION_UNSET;
 	$gnuplot->title = 'Fibonacci first 10 terms';
-	$gnuplot->plotstyle = \pakitometal\gnuplotPHP::PLOTSTYLE_LINESPOINTS;
+	$gnuplot->plotstyle = \pakitometal\gnuplotPHP::PLOTSTYLE_LINES;
 	$gnuplot->terminal = \pakitometal\gnuplotPHP::TERMINAL_PNGCAIRO;
 	file_put_contents(sys_get_temp_dir().'/fibo.png', $gnuplot->plot_data($fibo));
 	exit;

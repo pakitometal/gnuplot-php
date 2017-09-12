@@ -1,5 +1,5 @@
 # gnuplotPHP
-A data plotting library for PHP using gnuplot.
+A 2-D data plotting library for PHP using gnuplot.
 
 Based in Gergwar GnuPlot (https://github.com/Gregwar/GnuPlot).
 
@@ -37,7 +37,7 @@ Most property values and extra commands use the standard gnuplot syntax. Refer t
 * pngcairo
 * svg
 
-## Supported gnuplot plot styles
+## Supported gnuplot plot styles (2-D only)
 * boxerrorbars
 * boxes
 * boxxyerrorbars

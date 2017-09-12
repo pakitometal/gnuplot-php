@@ -91,48 +91,48 @@
 		/* END - Class constants */
 
 		/* INI - Object properties */
-		private $background_color;
-		private $box_fill_opacity;
-		private $box_fill_style;
-		private $box_relative_width;
-		private $canvas_height;
-		private $canvas_width;
-		private $font_face;
-		private $font_size;
-		private $graph_scale_x;
-		private $graph_scale_y;
-		private $key_align;
-		private $key_font_face;
-		private $key_font_size;
-		private $key_position;
-		private $key_style;
-		private $key_valign;
-		private $linetype_color;
-		private $linetype_dash;
-		private $linetype_point;
-		private $linetype_width;
-		private $plotstyle;
-		private $terminal;
-		private $title;
-		private $title_font_face;
-		private $title_font_size;
-		private $unit;
-		private $x_format;
-		private $x_label;
-		private $x_range;
-		private $x_ticks_font_size;
-		private $x_ticks_rotation;
-		private $x_ticks_time;
-		private $y_format;
-		private $y_label;
-		private $y_range;
-		private $y_ticks_font_size;
-		private $y_ticks_rotation;
-		private $y_ticks_time;
+		private $background_color;   // Graph background color (in #aarrggbb format)
+		private $box_fill_opacity;   // Opacity (for 0 to 1) for boxed plots
+		private $box_fill_style;     // Fill style for boxed plots
+		private $box_relative_width; // Relative with (from 0 to 1) for boxed plots
+		private $canvas_height;      // Canvas height
+		private $canvas_width;       // Canvas width
+		private $font_face;          // Global font face
+		private $font_size;          // Global font size
+		private $graph_scale_x;      // Graph horizontal scale (from 0 to 1) relative to the canvas size
+		private $graph_scale_y;      // Graph vertical scale (from 0 to 1) relative to the canvas size
+		private $key_align;          // Horizontal align for the graph key box
+		private $key_font_face;      // Font face for the graph key box
+		private $key_font_size;      // Font size align for the graph key box
+		private $key_position;       // Graph key box position
+		private $key_style;          // Graph key box style (with or without border)
+		private $key_valign;         // Vertical align for the graph key box
+		private $linetype_color;     // Line color (in #rrggbb format)
+		private $linetype_dash;      // Line dash style
+		private $linetype_point;     // Point type
+		private $linetype_width;     // Line width
+		private $plotstyle;          // Graph plot style
+		private $terminal;           // Output terminal type
+		private $title;              // Graph title
+		private $title_font_face;    // Graph title font face
+		private $title_font_size;    // Graph title font size
+		private $unit;               // Graph sizing unit
+		private $x_format;           // X-axis data format
+		private $x_label;            // X-axis label
+		private $x_range;            // X value range (in "x:y" format)
+		private $x_ticks_font_size;  // X-axis tick font size
+		private $x_ticks_rotation;   // X-axis tick rotation
+		private $x_ticks_time;       // Flag to parse X values as time values
+		private $y_format;           // Y-axis data format
+		private $y_label;            // Y-axis label
+		private $y_range;            // Y value range (in "x:y" format)
+		private $y_ticks_font_size;  // Y-axis tick font size
+		private $y_ticks_rotation;   // Y-axis tick rotation
+		private $y_ticks_time;       // Flag to parse Y values as time values
 
-		private $___gnuplot_binary;
-		private $___command_queue;
-		private $___data_tmpfile;
+		private $___gnuplot_binary;  // gnuplot binary system path
+		private $___command_queue;   // Data plot command queue
+		private $___data_tmpfile;    // Temp data file with the dataset
 		/* END - Object properties */
 
 		/* INI - Magic methods */
@@ -607,7 +607,7 @@
 		* Plots a data set.
 		*
 		* @param $data Array with the data to be plotted.
-		* @param $extra_commands Array with extra commands to be apllied to the plot.
+		* @param $extra_commands Array with extra commands to be applied to the plot. Each array value must be a valid gnuplot command line.
 		*
 		* @return String with the output of the gnuplot plot command.
 		*

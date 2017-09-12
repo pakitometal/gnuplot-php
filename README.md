@@ -28,5 +28,46 @@ You can find a full (basic) example of use in the [test.php](test.php) file.
 
 Most property values and extra commands use the standard gnuplot syntax. Refer to the [gnuplot homepage](http://gnuplot.sourceforge.net/) for further details.
 
+## Supported gnuplot terminals
+* dumb
+* gif
+* jpeg
+* pdfcairo
+* png
+* pngcairo
+* svg
+
+## Supported gnuplot plot styles
+* boxerrorbars
+* boxes
+* boxxyerrorbars
+* candlesticks
+* circles
+* ellipses
+* dots
+* filledcurves
+* fillsteps
+* financebars
+* fsteps
+* histeps
+* histogram
+* image
+* impulses
+* labels
+* lines
+* linespoints
+* parallelaxes
+* points
+* steps
+* rgbalpha
+* rgbimage
+* vectors
+* xerrorbars
+* xyerrorbars
+* yerrorbars
+* xerrorlines
+* xyerrorlines
+* yerrorlines
+
 # License
 See the [LICENSE](LICENSE) file for license rights and limitations (MIT).

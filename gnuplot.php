@@ -417,8 +417,18 @@
 		*
 		*/
 		private function ___init_data_plot() {
-			if ( self::TERMINAL_DUMB == $this->terminal ) {	$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height; }
-			else { $terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"'; }
+			switch ( $this->terminal ) {
+				case self::TERMINAL_DUMB:
+					$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height;
+					break;
+				case self::TERMINAL_PDFCAIRO:
+				case self::TERMINAL_PNGCAIRO:
+					$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"';
+					break;
+				default:
+					$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"';
+					break;
+			}
 			$command_queue = [
 				 $terminal
 				,'set size '.$this->graph_scale_x.','.$this->graph_scale_y

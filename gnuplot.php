@@ -387,7 +387,7 @@
 		*
 		*/
 		private function ___execute_queue( $flush = true ) {
-			$command_queue = implode(' ; ', array_map("escapeshellcmd", $this->___command_queue));
+			$command_queue = implode(' ; ', $this->___command_queue);
 			if ( $flush ) { $this->___command_queue = []; }
 			return shell_exec($this->___gnuplot_binary.' -e \''.str_replace("'", "\'", $command_queue).'\'');
 		}
@@ -464,10 +464,10 @@
 			if ( $this->x_label ) { $command_queue[] = 'set xlabel "'.$this->x_label.'"'; }
 			if ( $this->y_label ) { $command_queue[] = 'set ylabel "'.$this->y_label.'"'; }
 			$xticks = 'set xtics rotate by '.$this->x_ticks_rotation.' right font ",'.$this->x_ticks_font_size.'"';
-			if ( $this->x_ticks_time ) { $xticks.= ' time'; $command_queue[] = 'set format x '.$this->x_format; }
+			if ( $this->x_ticks_time ) { $xticks.= ' time'; $command_queue[] = 'set format x "'.$this->x_format.'"'; }
 			$command_queue[] = $xticks;
 			$yticks = 'set ytics rotate by '.$this->y_ticks_rotation.' right font ",'.$this->y_ticks_font_size.'"';
-			if ( $this->y_ticks_time ) { $yticks.= ' time'; $command_queue[] = 'set format y '.$this->y_format; }
+			if ( $this->y_ticks_time ) { $yticks.= ' time'; $command_queue[] = 'set format y "'.$this->y_format.'"'; }
 			$command_queue[] = $yticks;
 			if ( $this->x_range ) { $command_queue[] = 'set xrange ['.$this->x_range.']'; }
 			if ( $this->y_range ) { $command_queue[] = 'set yrange ['.$this->y_range.']'; }
@@ -499,7 +499,8 @@
 				if ( !$max_cols ) { $max_cols = $min_cols; }
 				$cols_count = array_map(function( $row ) { return count($row); }, $dataset);
 				if ( 1 < count(array_unique($cols_count)) ) { return false; }
-				return ( (!$min_cols && !$max_cols) || ($min_cols <= $cols_count[0] && $cols_count[0] <= $max_cols) );
+				$cols_count = array_shift($cols_count);
+				return ( (!$min_cols && !$max_cols) || ($min_cols <= $cols_count && $cols_count <= $max_cols) );
 			};
 
 			switch ( $this->plotstyle ) {

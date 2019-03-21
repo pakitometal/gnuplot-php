@@ -423,7 +423,8 @@
 					break;
 				case self::TERMINAL_PDFCAIRO:
 				case self::TERMINAL_PNGCAIRO:
-					$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"';
+					//$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"';
+					$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.$this->unit.','.$this->canvas_height.$this->unit.' transparent font "'.$this->font_face.','.$this->font_size.'"';
 					break;
 				default:
 					$terminal = 'set terminal '.$this->terminal.' size '.$this->canvas_width.','.$this->canvas_height.' background rgb "'.$this->background_color.'" font "'.$this->font_face.','.$this->font_size.'"';

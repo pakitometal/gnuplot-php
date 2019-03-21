@@ -18,10 +18,15 @@
 		,[ 10, 55 ]
 	];
 
+	$fibo = [ '2017-06-29' => [ '2017-06-29', 225, 225, 290, 290 ] ];
+
 	$gnuplot->key_position = \pakitometal\gnuplotPHP::KEY_POSITION_UNSET;
 	$gnuplot->title = 'Fibonacci first 10 terms';
-	$gnuplot->plotstyle = \pakitometal\gnuplotPHP::PLOTSTYLE_LINES;
+	$gnuplot->y_range = '0:500';
+	$gnuplot->x_range = '2017-06-25:2017-06-30';
+	$gnuplot->x_format = '%Y-%m-%d';
+	$gnuplot->x_ticks_time = true;
+	$gnuplot->plotstyle = \pakitometal\gnuplotPHP::PLOTSTYLE_CANDLESTICKS;
 	$gnuplot->terminal = \pakitometal\gnuplotPHP::TERMINAL_PNGCAIRO;
-	$gnuplot->background_color ='#ff000000';
 	file_put_contents(sys_get_temp_dir().'/fibo.png', $gnuplot->plot_data($fibo, [ 'set grid' ]));
 	exit;
